@@ -1,46 +1,39 @@
-# Astro Starter Kit: Basics
+# autoskills
 
-```sh
-pnpm create astro@latest -- --template basics
+**One command. Your entire AI skill stack. Installed.**
+
+Scans your project, detects your tech stack, and installs the best AI agent skills automatically.
+
+```bash
+npx autoskills
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## How it works
 
-## 🚀 Project Structure
+1. Run `npx autoskills` in your project root
+2. Your `package.json` and config files are scanned to detect technologies
+3. The best matching AI agent skills are installed via [skills.sh](https://skills.sh)
 
-Inside of your Astro project, you'll see the following folders and files:
+That's it. No config needed.
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+## Options
+
+```
+-y, --yes       Skip confirmation prompt
+--dry-run       Show what would be installed without installing
+-h, --help      Show help message
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Supported technologies
 
-## 🧞 Commands
+React · Next.js · Vue · Nuxt · Svelte · Angular · Astro · Tailwind CSS · shadcn/ui · TypeScript · Supabase · Neon · Playwright · Expo · React Native · Remotion · Better Auth · Turborepo · Vite · Azure · Vercel AI SDK · ElevenLabs · Cloudflare · AWS · SwiftUI
 
-All commands are run from the root of the project, from a terminal:
+> More coming soon. Check [skills.sh](https://skills.sh) for the latest.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+## Requirements
 
-## 👀 Want to learn more?
+Node.js >= 22
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## License
+
+MIT — [midudev](https://midu.dev)
