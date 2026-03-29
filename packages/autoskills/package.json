@@ -2,7 +2,24 @@
   "name": "autoskills",
   "version": "0.1.2",
   "description": "Auto-detect and install the best AI agent skills for your project",
-  "type": "module",
+  "keywords": [
+    "agent",
+    "ai",
+    "auto",
+    "claude",
+    "cli",
+    "copilot",
+    "cursor",
+    "detect",
+    "skills"
+  ],
+  "homepage": "https://autoskills.sh",
+  "license": "MIT",
+  "author": "midudev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/midudev/autoskills.sh"
+  },
   "bin": {
     "autoskills": "./index.mjs"
   },
@@ -10,28 +27,11 @@
     "index.mjs",
     "lib.mjs"
   ],
+  "type": "module",
   "scripts": {
     "test": "node --test 'tests/*.test.mjs'"
   },
   "engines": {
     "node": ">=22.0.0"
-  },
-  "keywords": [
-    "skills",
-    "ai",
-    "agent",
-    "cursor",
-    "copilot",
-    "claude",
-    "cli",
-    "auto",
-    "detect"
-  ],
-  "author": "midudev",
-  "license": "MIT",
-  "homepage": "https://autoskills.sh",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/midudev/autoskills.sh"
   }
 }

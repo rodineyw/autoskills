@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Geist Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro',
-    Menlo, Consolas, monospace;
-  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro',
-    Menlo, Consolas, monospace;
+  --font-sans:
+    "Geist Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  --font-mono:
+    "Geist Mono", ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
 }
 
 ::selection {
