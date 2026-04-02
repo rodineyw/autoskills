@@ -171,6 +171,36 @@ describe("detectTechnologies", () => {
     assert.ok(ids.includes("tailwind"));
   });
 
+  it("detects Three.js from dependencies", () => {
+    writeFileSync(
+      join(tmpDir, "package.json"),
+      JSON.stringify({ dependencies: { three: "^0.173.0" } }),
+    );
+    const { detected } = detectTechnologies(tmpDir);
+    const ids = detected.map((t) => t.id);
+    assert.ok(ids.includes("threejs"));
+  });
+
+  it("keeps Three.js detection when React and React Three Fiber are present", () => {
+    writeFileSync(
+      join(tmpDir, "package.json"),
+      JSON.stringify({ dependencies: { three: "^0.173.0", react: "^19.0.0", "react-dom": "^19.0.0" } }),
+    );
+    const { detected } = detectTechnologies(tmpDir);
+    const ids = detected.map((t) => t.id);
+    assert.ok(ids.includes("threejs"));
+  });
+
+  it("detects React + React Three Fiber combo when Three.js is present", () => {
+    writeFileSync(
+      join(tmpDir, "package.json"),
+      JSON.stringify({ dependencies: { three: "^0.173.0", react: "^19.0.0", "@react-three/fiber": "^9.0.0" } }),
+    );
+    const { combos } = detectTechnologies(tmpDir);
+    const comboIds = combos.map((c) => c.id);
+    assert.ok(comboIds.includes("react-react-three-fiber"));
+  });
+
   it("detects shadcn/ui from components.json", () => {
     writeFileSync(join(tmpDir, "package.json"), JSON.stringify({}));
     writeFileSync(join(tmpDir, "components.json"), "{}");
@@ -725,6 +755,21 @@ describe("detectCombos", () => {
   it("detects nextjs-clerk combo", () => {
     const combos = detectCombos(["nextjs", "clerk"]);
     assert.ok(combos.some((c) => c.id === "nextjs-clerk"));
+  });
+
+  it("detects react-react-three-fiber combo", () => {
+    const combos = detectCombos(["threejs", "react", "@react-three/fiber"]);
+    assert.ok(combos.some((c) => c.id === "react-react-three-fiber"));
+  });
+
+  it("does not detect react-react-three-fiber combo without react", () => {
+    const combos = detectCombos(["threejs", "@react-three/fiber"]);
+    assert.ok(!combos.some((c) => c.id === "react-react-three-fiber"));
+  });
+
+  it("does not detect react-react-three-fiber combo without Three.js", () => {
+    const combos = detectCombos(["react", "@react-three/fiber"]);
+    assert.ok(!combos.some((c) => c.id === "react-react-three-fiber"));
   });
 
   it("does not detect nextjs-clerk combo without clerk", () => {
