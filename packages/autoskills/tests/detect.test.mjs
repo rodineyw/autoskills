@@ -788,6 +788,47 @@ dependencies { implementation("com.clerk:clerk-android:1.0.0") }
     ok(ids.includes("clerk"));
     ok(combos.some((c) => c.id === "android-clerk"));
   });
+
+  it("detects Terraform from .terraform.lock.hcl", () => {
+    writeFile(tmp.path, ".terraform.lock.hcl", "# This file is maintained automatically by terraform");
+    const { detected } = detectTechnologies(tmp.path);
+    ok(detected.some((t) => t.id === "terraform"));
+  });
+
+  it("detects Terraform from terraform.tfvars", () => {
+    writeFile(tmp.path, "terraform.tfvars", 'region = "us-east-1"');
+    const { detected } = detectTechnologies(tmp.path);
+    ok(detected.some((t) => t.id === "terraform"));
+  });
+
+  it("detects Terraform from main.tf", () => {
+    writeFile(tmp.path, "main.tf", 'terraform {\n  required_version = ">= 1.0"\n}');
+    const { detected } = detectTechnologies(tmp.path);
+    ok(detected.some((t) => t.id === "terraform"));
+  });
+
+  it("detects Terraform from variables.tf", () => {
+    writeFile(tmp.path, "variables.tf", 'variable "region" {\n  type = string\n}');
+    const { detected } = detectTechnologies(tmp.path);
+    ok(detected.some((t) => t.id === "terraform"));
+  });
+
+  it("detects Terraform from outputs.tf", () => {
+    writeFile(tmp.path, "outputs.tf", 'output "vpc_id" {\n  value = aws_vpc.main.id\n}');
+    const { detected } = detectTechnologies(tmp.path);
+    ok(detected.some((t) => t.id === "terraform"));
+  });
+
+  it("returns correct skills for Terraform detection", () => {
+    writeFile(tmp.path, ".terraform.lock.hcl", "# terraform lock file");
+    const { detected } = detectTechnologies(tmp.path);
+    const terraform = detected.find((t) => t.id === "terraform");
+    ok(terraform);
+    ok(terraform.skills.includes("hashicorp/agent-skills/terraform-style-guide"));
+    ok(terraform.skills.includes("hashicorp/agent-skills/refactor-module"));
+    ok(terraform.skills.includes("hashicorp/agent-skills/terraform-stacks"));
+    ok(terraform.skills.includes("wshobson/agents/terraform-module-library"));
+  });
 });
 
 // ── readDenoJson ──────────────────────────────────────────────

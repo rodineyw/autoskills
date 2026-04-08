@@ -38,6 +38,7 @@ const SCAN_SKIP_DIRS = new Set([
   ".cache",
   "coverage",
   ".turbo",
+  ".terraform",
   "var",
 ]);
 

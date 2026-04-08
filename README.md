@@ -45,7 +45,7 @@ Built to work across modern frontend, backend, mobile, cloud, and media stacks.
 - **Data & Storage:** Supabase, Neon, Prisma, Drizzle ORM
 - **Auth & Billing:** Better Auth, Clerk, Stripe
 - **Testing:** Vitest, Playwright
-- **Cloud & Infrastructure:** Vercel, Vercel AI SDK, Cloudflare, Durable Objects, Cloudflare Agents, Cloudflare AI, AWS, Azure
+- **Cloud & Infrastructure:** Vercel, Vercel AI SDK, Cloudflare, Durable Objects, Cloudflare Agents, Cloudflare AI, AWS, Azure, Terraform
 - **Tooling:** Turborepo, Vite, oxlint
 - **Media & AI:** Remotion, ElevenLabs
 
