@@ -96,7 +96,7 @@ export function _resetResolvedBin() {
  * Tries to use a pre-resolved binary path to avoid npx overhead on each call.
  * @param {string} skillPath - Skill identifier to install.
  * @param {string[]} [agents=[]] - Optional list of target IDEs.
- * @returns {Promise<{ success: boolean, output: string }>}
+ * @returns {Promise<{ success: boolean, output: string, stderr: string, exitCode: number|null, command: string }>}
  */
 export function installSkill(skillPath, agents = []) {
   const bin = resolveSkillsBin();
@@ -112,19 +112,36 @@ export function installSkill(skillPath, agents = []) {
     opts = getNpxSpawnOptions();
   }
 
+  const command = `${cmd} ${args.join(" ")}`;
+
   return new Promise((resolve) => {
     const child = spawn(cmd, args, opts);
 
-    const chunks = [];
-    child.stdout?.on("data", (d) => chunks.push(d));
-    child.stderr?.on("data", (d) => chunks.push(d));
+    const stdoutChunks = [];
+    const stderrChunks = [];
+    child.stdout?.on("data", (d) => stdoutChunks.push(d));
+    child.stderr?.on("data", (d) => stderrChunks.push(d));
 
     child.on("close", (code) => {
-      resolve({ success: code === 0, output: Buffer.concat(chunks).toString() });
+      const stdout = Buffer.concat(stdoutChunks).toString();
+      const stderr = Buffer.concat(stderrChunks).toString();
+      resolve({
+        success: code === 0,
+        output: stdout + stderr,
+        stderr,
+        exitCode: code,
+        command,
+      });
     });
 
     child.on("error", (err) => {
-      resolve({ success: false, output: err.message });
+      resolve({
+        success: false,
+        output: err.message,
+        stderr: err.message,
+        exitCode: null,
+        command,
+      });
     });
   });
 }
@@ -217,7 +234,13 @@ export async function installAll(skills, agents = []) {
       } else {
         state.status = "failed";
         state.output = result.output;
-        errors.push({ name: state.name, output: result.output });
+        errors.push({
+          name: state.name,
+          output: result.output,
+          stderr: result.stderr,
+          exitCode: result.exitCode,
+          command: result.command,
+        });
         failed++;
       }
       render();
@@ -260,7 +283,13 @@ async function installAllSimple(skills, agents = []) {
         installed++;
       } else {
         log(red(`   ✘ ${skill}`) + dim(" — failed"));
-        errors.push({ name: skill, output: result.output });
+        errors.push({
+          name: skill,
+          output: result.output,
+          stderr: result.stderr,
+          exitCode: result.exitCode,
+          command: result.command,
+        });
         failed++;
       }
     }

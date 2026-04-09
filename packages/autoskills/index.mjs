@@ -192,8 +192,59 @@ function printSkillsList(skills) {
 }
 
 /**
+ * Strips ANSI escape sequences from a string.
+ * @param {string} str
+ * @returns {string}
+ */
+function stripAnsi(str) {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*m/g, "");
+}
+
+/**
+ * Extracts the most useful error lines from combined process output.
+ * Filters out blank lines, npm noise, and progress indicators to surface
+ * the actual error message.
+ * @param {string} stderr - The stderr output from the child process.
+ * @param {string} output - The combined stdout+stderr output.
+ * @returns {string[]} Meaningful error lines (already stripped of ANSI codes).
+ */
+function extractErrorLines(stderr, output) {
+  const raw = stderr?.trim() || output?.trim() || "";
+  const noisePatterns = [
+    /^npm\s+(warn|notice|http)\b/i,
+    /^npm\s+error\s*$/i,
+    /^\s*$/,
+    /^>\s/,
+    /^added\s+\d+\s+packages/i,
+    /^up to date/i,
+    /^npm error A complete log of this run/i,
+    /^npm error\s+[\w/\\:.-]+debug-\d+\.log$/i,
+  ];
+
+  return stripAnsi(raw)
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !noisePatterns.some((p) => p.test(l)));
+}
+
+/**
+ * Picks a short reason string from error output for the non-verbose summary.
+ * Returns the first meaningful error line, truncated to 80 chars.
+ * @param {string} stderr
+ * @param {string} output
+ * @returns {string}
+ */
+function briefErrorReason(stderr, output) {
+  const lines = extractErrorLines(stderr, output);
+  if (lines.length === 0) return "Unknown error";
+  const line = lines[0];
+  return line.length > 80 ? line.slice(0, 77) + "..." : line;
+}
+
+/**
  * Prints the final installation summary: success/failure counts, errors, and elapsed time.
- * @param {{ installed: number, failed: number, errors: { name: string, output: string }[], elapsed: number, verbose: boolean }} opts
+ * @param {{ installed: number, failed: number, errors: { name: string, output: string, stderr: string, exitCode: number|null, command: string }[], elapsed: number, verbose: boolean }} opts
  */
 function printSummary({ installed, failed, errors, elapsed, verbose }) {
   log();
@@ -216,17 +267,38 @@ function printSummary({ installed, failed, errors, elapsed, verbose }) {
     if (errors.length > 0) {
       log();
       log(bold(red("   Errors:")));
-      for (const { name, output } of errors) {
+      for (const { name, output, stderr, exitCode, command } of errors) {
         log(red(`     ✘ ${name}`));
-        if (verbose && output) {
-          const lines = output.trim().split("\n").slice(-5);
-          for (const line of lines) {
-            log(dim(`       ${line}`));
+
+        if (verbose) {
+          if (exitCode !== undefined && exitCode !== null) {
+            log(dim(`       exit code ${exitCode}`));
           }
+
+          const errorLines = extractErrorLines(stderr, output);
+          if (errorLines.length > 0) {
+            log();
+            for (const line of errorLines.slice(0, 20)) {
+              log(dim(`       ${line}`));
+            }
+            if (errorLines.length > 20) {
+              log(dim(`       … (${errorLines.length - 20} more lines)`));
+            }
+          }
+
+          if (command) {
+            log();
+            log(dim(`       command: ${command}`));
+          }
+          log();
+        } else {
+          const reason = briefErrorReason(stderr, output);
+          log(dim(`       ${reason}`));
         }
       }
       if (!verbose) {
-        log(dim("   Run with --verbose to see error details."));
+        log();
+        log(dim("   Run with --verbose to see full error details."));
       }
     }
   }
