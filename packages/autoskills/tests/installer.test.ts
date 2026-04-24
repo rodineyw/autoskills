@@ -231,7 +231,11 @@ describe("installSkill", () => {
     const projectDir = join(tmp.path, "project");
     mkdirSync(projectDir, { recursive: true });
     buildRegistry(regDir, [
-      { name: "cached-remote-skill", source: "owner/repo", files: { "SKILL.md": "# cached remote" } },
+      {
+        name: "cached-remote-skill",
+        source: "owner/repo",
+        files: { "SKILL.md": "# cached remote" },
+      },
     ]);
     const manifest = JSON.parse(readFileSync(join(regDir, "index.json"), "utf-8"));
     const entry = manifest.skills["cached-remote-skill"] as RegistryEntry;
@@ -289,9 +293,7 @@ describe("installSkill", () => {
     const regDir = join(tmp.path, "registry");
     const projectDir = join(tmp.path, "project");
     mkdirSync(projectDir, { recursive: true });
-    buildRegistry(regDir, [
-      { name: "s1", source: "owner/repo", files: { "SKILL.md": "# s1" } },
-    ]);
+    buildRegistry(regDir, [{ name: "s1", source: "owner/repo", files: { "SKILL.md": "# s1" } }]);
     _setRegistryDir(regDir);
 
     const result = await installSkill("owner/repo/s1", ["universal", "claude-code", "cursor"], {
@@ -359,9 +361,7 @@ describe("installSkill", () => {
         skills: { zebra: { source: "x/y", sourceType: "autoskills-registry", computedHash: "z" } },
       }),
     );
-    buildRegistry(regDir, [
-      { name: "alpha", source: "owner/repo", files: { "SKILL.md": "# a" } },
-    ]);
+    buildRegistry(regDir, [{ name: "alpha", source: "owner/repo", files: { "SKILL.md": "# a" } }]);
     _setRegistryDir(regDir);
 
     const result = await installSkill("owner/repo/alpha", [], {

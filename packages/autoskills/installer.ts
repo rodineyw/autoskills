@@ -17,17 +17,7 @@ import { fileURLToPath } from "node:url";
 import { parseSkillPath } from "./lib.ts";
 import type { SkillEntry } from "./lib.ts";
 import { AGENT_FOLDER_MAP } from "./skills-map.ts";
-import {
-  log,
-  write,
-  dim,
-  green,
-  cyan,
-  red,
-  HIDE_CURSOR,
-  SHOW_CURSOR,
-  SPINNER,
-} from "./colors.ts";
+import { log, write, dim, green, cyan, red, HIDE_CURSOR, SHOW_CURSOR, SPINNER } from "./colors.ts";
 
 // ── Registry ─────────────────────────────────────────────────
 
@@ -66,10 +56,7 @@ let _cachedRegistryDir: string | null = null;
 
 export function getRegistryDir(): string {
   if (_cachedRegistryDir) return _cachedRegistryDir;
-  const candidates = [
-    join(__dirname, "skills-registry"),
-    join(__dirname, "..", "skills-registry"),
-  ];
+  const candidates = [join(__dirname, "skills-registry"), join(__dirname, "..", "skills-registry")];
   for (const c of candidates) {
     if (existsSync(join(c, "index.json"))) {
       _cachedRegistryDir = c;
@@ -167,7 +154,8 @@ function getInstallRegistryDir(opts: InstallOptions): string {
 }
 
 function getCacheRegistryDir(entry: RegistryEntry): string {
-  const base = process.env.AUTOSKILLS_CACHE_DIR || join(homedir(), ".cache", "autoskills", "skills-registry");
+  const base =
+    process.env.AUTOSKILLS_CACHE_DIR || join(homedir(), ".cache", "autoskills", "skills-registry");
   return join(base, entry.bundleHash);
 }
 
@@ -275,7 +263,11 @@ function copyRegistryEntryFromLocal(
   return true;
 }
 
-function copyRegistryEntryFromCache(skillName: string, entry: RegistryEntry, destDir: string): boolean {
+function copyRegistryEntryFromCache(
+  skillName: string,
+  entry: RegistryEntry,
+  destDir: string,
+): boolean {
   const registryDir = getCacheRegistryDir(entry);
   const verdict = verifyRegistryEntry(skillName, entry, registryDir);
   if (!verdict.ok) return false;
@@ -330,11 +322,7 @@ export function agentFolderFor(agent: string): string | null {
   return null;
 }
 
-function updateSkillsLock(
-  projectDir: string,
-  skillName: string,
-  entry: RegistryEntry,
-): void {
+function updateSkillsLock(projectDir: string, skillName: string, entry: RegistryEntry): void {
   const lockPath = join(projectDir, "skills-lock.json");
   let lock: { version: number; skills: Record<string, unknown> };
   try {

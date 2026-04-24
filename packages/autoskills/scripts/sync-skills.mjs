@@ -25,15 +25,11 @@ import { stdin, stdout } from "node:process";
 import { fileURLToPath } from "node:url";
 import { pipeline } from "node:stream/promises";
 
-import {
-  SKILLS_MAP,
-  COMBO_SKILLS_MAP,
-  FRONTEND_BONUS_SKILLS,
-} from "../skills-map.ts";
+import { SKILLS_MAP, COMBO_SKILLS_MAP, FRONTEND_BONUS_SKILLS } from "../skills-map.ts";
 import { parseSkillPath } from "../lib.ts";
 import { bold, cyan, dim, green, log, red, yellow } from "../colors.ts";
 
-process.loadEnvFile()
+process.loadEnvFile();
 
 // ── Config ───────────────────────────────────────────────────
 
@@ -168,10 +164,14 @@ async function ghFetch(url) {
 }
 
 function resolveRepoHead(repo) {
-  const result = spawnSync("git", ["ls-remote", "--symref", `https://github.com/${repo}.git`, "HEAD"], {
-    encoding: "utf-8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const result = spawnSync(
+    "git",
+    ["ls-remote", "--symref", `https://github.com/${repo}.git`, "HEAD"],
+    {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
   if (result.status !== 0) {
     throw new Error(`git ls-remote failed for ${repo}: ${result.stderr.trim() || "unknown error"}`);
   }
@@ -226,9 +226,7 @@ async function downloadTarball(repo, sha, destFile) {
 }
 
 async function fetchRepoTree(repo, sha) {
-  const res = await ghFetch(
-    `https://api.github.com/repos/${repo}/git/trees/${sha}?recursive=1`,
-  );
+  const res = await ghFetch(`https://api.github.com/repos/${repo}/git/trees/${sha}?recursive=1`);
   const body = await res.json();
   if (body.truncated) {
     throw new Error(`git tree truncated for ${repo}@${sha.slice(0, 7)}`);
@@ -353,7 +351,10 @@ function materializeSkillsFromSparseClone(repo, branch, skillNames, destRoot) {
     `git clone ${repo}`,
   );
 
-  const paths = runGit(["-C", repoDir, "ls-tree", "-r", "--name-only", "HEAD"], `git ls-tree ${repo}`)
+  const paths = runGit(
+    ["-C", repoDir, "ls-tree", "-r", "--name-only", "HEAD"],
+    `git ls-tree ${repo}`,
+  )
     .split("\n")
     .filter(Boolean);
   const tree = paths.map((path) => ({ type: "blob", path }));
@@ -521,7 +522,11 @@ async function reviewWithOpenAI(skillName, files) {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { status: "rejected", flags: ["invalid-json"], summary: "auditor returned invalid JSON" };
+    return {
+      status: "rejected",
+      flags: ["invalid-json"],
+      summary: "auditor returned invalid JSON",
+    };
   }
   const status = ["approved", "flagged", "rejected"].includes(parsed.status)
     ? parsed.status
@@ -688,7 +693,11 @@ async function main() {
       log(green("No failed or flagged skills found in the last report."));
       process.exit(0);
     }
-    log(dim(`   --retry-failed: retrying ${retryFailed.size} skill${retryFailed.size === 1 ? "" : "s"}`));
+    log(
+      dim(
+        `   --retry-failed: retrying ${retryFailed.size} skill${retryFailed.size === 1 ? "" : "s"}`,
+      ),
+    );
     log();
   }
 
@@ -703,7 +712,15 @@ async function main() {
 
   const report = {
     generatedAt: new Date().toISOString(),
-    totals: { repos: byRepo.size, skills: 0, approved: 0, flagged: 0, rejected: 0, unchanged: 0, missing: 0 },
+    totals: {
+      repos: byRepo.size,
+      skills: 0,
+      approved: 0,
+      flagged: 0,
+      rejected: 0,
+      unchanged: 0,
+      missing: 0,
+    },
     rejected: [],
     flagged: [],
     missing: [],
@@ -885,7 +902,8 @@ async function main() {
   log(dim(`   report: ${relative(process.cwd(), REPORT_PATH)}`));
   log();
 
-  const exitBad = report.totals.rejected > 0 || report.totals.missing > 0 || report.errors.length > 0;
+  const exitBad =
+    report.totals.rejected > 0 || report.totals.missing > 0 || report.errors.length > 0;
   process.exit(exitBad ? 1 : 0);
 }
 

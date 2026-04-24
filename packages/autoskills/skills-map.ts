@@ -460,10 +460,7 @@ export const SKILLS_MAP: Technology[] = [
     detect: {
       packages: ["agents"],
     },
-    skills: [
-      "cloudflare/skills/agents-sdk",
-      "cloudflare/skills/sandbox-sdk",
-    ],
+    skills: ["cloudflare/skills/agents-sdk", "cloudflare/skills/sandbox-sdk"],
   },
   {
     id: "cloudflare-ai",
@@ -1023,10 +1020,7 @@ export const SKILLS_MAP: Technology[] = [
         patterns: ["fastapi", "FastAPI"],
       },
     },
-    skills: [
-      "wshobson/agents/fastapi-templates",
-      "mindrally/skills/fastapi-python",
-    ],
+    skills: ["wshobson/agents/fastapi-templates", "mindrally/skills/fastapi-python"],
   },
   {
     id: "django",
@@ -1181,10 +1175,7 @@ export const COMBO_SKILLS_MAP: ComboSkill[] = [
     id: "react-native-expo",
     name: "React Native + Expo",
     requires: ["react-native", "expo"],
-    skills: [
-      "expo/skills/building-native-ui",
-      "sleekdotdesign/agent-skills/design-mobile-apps",
-    ],
+    skills: ["expo/skills/building-native-ui", "sleekdotdesign/agent-skills/design-mobile-apps"],
   },
   {
     id: "nextjs-vercel-ai",
