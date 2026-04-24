@@ -1,70 +1,134 @@
-import { spawn, execFileSync } from "node:child_process";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { createHash } from "node:crypto";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { parseSkillPath } from "./lib.ts";
 import type { SkillEntry } from "./lib.ts";
-import { log, write, dim, green, cyan, red, HIDE_CURSOR, SHOW_CURSOR, SPINNER } from "./colors.ts";
+import { AGENT_FOLDER_MAP } from "./skills-map.ts";
+import {
+  log,
+  write,
+  dim,
+  green,
+  cyan,
+  red,
+  HIDE_CURSOR,
+  SHOW_CURSOR,
+  SPINNER,
+} from "./colors.ts";
 
-export function getNpxCommand(platform: string = process.platform): string {
-  return platform === "win32" ? "npx.cmd" : "npx";
-}
+// ── Registry ─────────────────────────────────────────────────
 
-export function getNpxSpawnOptions(platform: string = process.platform): {
-  stdio: string[];
-  shell: boolean;
-} {
-  return {
-    stdio: ["pipe", "pipe", "pipe"],
-    shell: platform === "win32",
+export interface RegistryEntry {
+  source: string;
+  skillPath: string;
+  commitSha: string;
+  files: string[];
+  sha256: Record<string, string>;
+  bundleHash: string;
+  review: {
+    status: "approved" | "flagged";
+    flags: string[];
+    summary: string;
+    model: string;
+    promptVersion: string;
+    reviewedAt: string;
   };
 }
 
-export function buildInstallArgs(skillPath: string, agents: string[] = []): string[] {
-  const { repo, skillName } = parseSkillPath(skillPath);
-  const args = ["-y", "skills", "add", repo];
-  if (skillName) args.push("--skill", skillName);
-  args.push("-y");
-  if (agents.length > 0) args.push("-a", ...agents);
-  return args;
+export interface Registry {
+  version: number;
+  generatedAt: string;
+  reviewer: { model: string; promptVersion: string };
+  skills: Record<string, RegistryEntry>;
 }
 
-export function buildDirectArgs(skillPath: string, agents: string[] = []): string[] {
-  const { repo, skillName } = parseSkillPath(skillPath);
-  const args = ["add", repo];
-  if (skillName) args.push("--skill", skillName);
-  args.push("-y");
-  if (agents.length > 0) args.push("-a", ...agents);
-  return args;
-}
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-let _resolvedBin: string | null | undefined;
+let _cachedRegistry: Registry | null | undefined;
+let _cachedRegistryDir: string | null = null;
 
-export function resolveSkillsBin(): string | null {
-  if (_resolvedBin !== undefined) return _resolvedBin;
-  try {
-    const npx = getNpxCommand();
-    execFileSync(npx, ["-y", "skills", "--version"], {
-      encoding: "utf-8",
-      timeout: 30_000,
-      stdio: "pipe",
-    });
-    const whichCmd = process.platform === "win32" ? "where" : "which";
-    const binPath = execFileSync(whichCmd, ["skills"], {
-      encoding: "utf-8",
-      timeout: 5_000,
-      stdio: "pipe",
-    }).trim();
-    _resolvedBin = binPath || null;
-  } catch {
-    _resolvedBin = null;
+export function getRegistryDir(): string {
+  if (_cachedRegistryDir) return _cachedRegistryDir;
+  const candidates = [
+    join(__dirname, "skills-registry"),
+    join(__dirname, "..", "skills-registry"),
+  ];
+  for (const c of candidates) {
+    if (existsSync(join(c, "index.json"))) {
+      _cachedRegistryDir = c;
+      return c;
+    }
   }
-  return _resolvedBin;
+  _cachedRegistryDir = candidates[0];
+  return _cachedRegistryDir;
+}
+
+export function loadRegistry(): Registry | null {
+  if (_cachedRegistry !== undefined) return _cachedRegistry;
+  const manifestPath = join(getRegistryDir(), "index.json");
+  try {
+    const body = JSON.parse(readFileSync(manifestPath, "utf-8")) as Registry;
+    _cachedRegistry = body;
+    return body;
+  } catch {
+    _cachedRegistry = null;
+    return null;
+  }
 }
 
 /** @internal — exported for testing only */
-export function _resetResolvedBin(): void {
-  _resolvedBin = undefined;
+export function _setRegistryDir(dir: string | null): void {
+  _cachedRegistryDir = dir;
+  _cachedRegistry = undefined;
 }
 
-interface InstallResult {
+// ── Integrity ────────────────────────────────────────────────
+
+function sha256File(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+export function verifyRegistryEntry(
+  skillName: string,
+  entry: RegistryEntry,
+  registryDir: string = getRegistryDir(),
+): { ok: boolean; reason?: string } {
+  const skillDir = join(registryDir, skillName);
+  if (!existsSync(skillDir)) {
+    return { ok: false, reason: `missing directory ${skillDir}` };
+  }
+  for (const rel of entry.files) {
+    const abs = join(skillDir, rel);
+    if (!existsSync(abs)) {
+      return { ok: false, reason: `missing file ${rel}` };
+    }
+    const expected = entry.sha256[rel];
+    if (!expected) {
+      return { ok: false, reason: `no recorded hash for ${rel}` };
+    }
+    const actual = sha256File(abs);
+    if (actual !== expected) {
+      return { ok: false, reason: `hash mismatch for ${rel}` };
+    }
+  }
+  return { ok: true };
+}
+
+// ── Install ──────────────────────────────────────────────────
+
+export interface InstallResult {
   success: boolean;
   output: string;
   stderr: string;
@@ -72,55 +136,173 @@ interface InstallResult {
   command: string;
 }
 
-export function installSkill(skillPath: string, agents: string[] = []): Promise<InstallResult> {
-  const bin = resolveSkillsBin();
+interface InstallOptions {
+  projectDir?: string;
+  registryDir?: string;
+}
 
-  let cmd: string;
-  let args: string[];
-  let opts: { stdio: string[]; shell?: boolean };
-  if (bin) {
-    cmd = bin;
-    args = buildDirectArgs(skillPath, agents);
-    opts = { stdio: ["pipe", "pipe", "pipe"] };
-  } else {
-    cmd = getNpxCommand();
-    args = buildInstallArgs(skillPath, agents);
-    opts = getNpxSpawnOptions();
+function relPathFromTo(from: string, to: string): string {
+  const rel = relative(from, to);
+  return rel.split("\\").join("/");
+}
+
+function copyFile(src: string, dest: string): void {
+  mkdirSync(dirname(dest), { recursive: true });
+  copyFileSync(src, dest);
+}
+
+function ensureSymlinkTo(target: string, linkPath: string): void {
+  mkdirSync(dirname(linkPath), { recursive: true });
+  try {
+    const st = statSync(linkPath);
+    if (st) rmSync(linkPath, { recursive: true, force: true });
+  } catch {}
+  const rel = relPathFromTo(dirname(linkPath), target);
+  try {
+    symlinkSync(rel, linkPath, "dir");
+  } catch {
+    copyDir(target, linkPath);
+  }
+}
+
+function copyDir(src: string, dest: string): void {
+  mkdirSync(dest, { recursive: true });
+  for (const e of readdirSync(src, { withFileTypes: true })) {
+    const s = join(src, e.name);
+    const d = join(dest, e.name);
+    if (e.isDirectory()) {
+      copyDir(s, d);
+    } else if (e.isFile()) {
+      copyFileSync(s, d);
+    }
+  }
+}
+
+export function agentFolderFor(agent: string): string | null {
+  for (const [folder, name] of Object.entries(AGENT_FOLDER_MAP)) {
+    if (name === agent) return folder;
+  }
+  return null;
+}
+
+function updateSkillsLock(
+  projectDir: string,
+  skillName: string,
+  entry: RegistryEntry,
+): void {
+  const lockPath = join(projectDir, "skills-lock.json");
+  let lock: { version: number; skills: Record<string, unknown> };
+  try {
+    lock = JSON.parse(readFileSync(lockPath, "utf-8"));
+    if (!lock || typeof lock !== "object" || !lock.skills) {
+      lock = { version: 1, skills: {} };
+    }
+  } catch {
+    lock = { version: 1, skills: {} };
+  }
+  lock.skills[skillName] = {
+    source: entry.source,
+    sourceType: "autoskills-registry",
+    computedHash: entry.bundleHash,
+  };
+  const sortedSkills: Record<string, unknown> = {};
+  for (const k of Object.keys(lock.skills).sort()) {
+    sortedSkills[k] = lock.skills[k];
+  }
+  lock.skills = sortedSkills;
+  writeFileSync(lockPath, JSON.stringify(lock, null, 2) + "\n");
+}
+
+export async function installSkill(
+  skillPath: string,
+  agents: string[] = [],
+  opts: InstallOptions = {},
+): Promise<InstallResult> {
+  const projectDir = opts.projectDir || process.cwd();
+  const registryDir = opts.registryDir || getRegistryDir();
+  const command = `autoskills install ${skillPath}`;
+
+  const fail = (msg: string): InstallResult => ({
+    success: false,
+    output: msg,
+    stderr: msg,
+    exitCode: 1,
+    command,
+  });
+
+  const { skillName } = parseSkillPath(skillPath);
+  if (!skillName) return fail(`invalid skill path: ${skillPath}`);
+
+  const registry = loadRegistry();
+  if (!registry) {
+    return fail(
+      `skills-registry not found. Run 'pnpm sync:skills' in the autoskills package.`,
+    );
   }
 
-  const command = `${cmd} ${args.join(" ")}`;
+  const entry = registry.skills[skillName];
+  if (!entry) {
+    return fail(`skill '${skillName}' not found in registry (unaudited).`);
+  }
 
-  return new Promise((resolve) => {
-    const child = spawn(cmd, args, opts as Parameters<typeof spawn>[2]);
+  const verdict = verifyRegistryEntry(skillName, entry, registryDir);
+  if (!verdict.ok) {
+    return fail(`integrity check failed: ${verdict.reason}`);
+  }
 
-    const stdoutChunks: Buffer[] = [];
-    const stderrChunks: Buffer[] = [];
-    child.stdout?.on("data", (d: Buffer) => stdoutChunks.push(d));
-    child.stderr?.on("data", (d: Buffer) => stderrChunks.push(d));
+  const canonicalDir = join(projectDir, ".agents", "skills", skillName);
+  try {
+    rmSync(canonicalDir, { recursive: true, force: true });
+    for (const rel of entry.files) {
+      copyFile(join(registryDir, skillName, rel), join(canonicalDir, rel));
+    }
+  } catch (err) {
+    return fail(`copy failed: ${(err as Error).message}`);
+  }
 
-    child.on("close", (code) => {
-      const stdout = Buffer.concat(stdoutChunks).toString();
-      const stderr = Buffer.concat(stderrChunks).toString();
-      resolve({
-        success: code === 0,
-        output: stdout + stderr,
-        stderr,
-        exitCode: code,
-        command,
-      });
-    });
+  const uniqueFolders = new Set<string>();
+  for (const agent of agents) {
+    if (agent === "universal") continue;
+    const folder = agentFolderFor(agent);
+    if (folder) uniqueFolders.add(folder);
+  }
 
-    child.on("error", (err) => {
-      resolve({
-        success: false,
-        output: err.message,
-        stderr: err.message,
-        exitCode: null,
-        command,
-      });
-    });
-  });
+  const symlinkErrors: string[] = [];
+  for (const folder of uniqueFolders) {
+    const linkPath = join(projectDir, folder, "skills", skillName);
+    try {
+      ensureSymlinkTo(canonicalDir, linkPath);
+    } catch (err) {
+      symlinkErrors.push(`${folder}: ${(err as Error).message}`);
+    }
+  }
+
+  try {
+    updateSkillsLock(projectDir, skillName, entry);
+  } catch (err) {
+    return fail(`lockfile update failed: ${(err as Error).message}`);
+  }
+
+  if (symlinkErrors.length > 0) {
+    return {
+      success: false,
+      output: symlinkErrors.join("\n"),
+      stderr: symlinkErrors.join("\n"),
+      exitCode: 1,
+      command,
+    };
+  }
+
+  return {
+    success: true,
+    output: `installed ${skillName} into ${relPathFromTo(projectDir, canonicalDir)}`,
+    stderr: "",
+    exitCode: 0,
+    command,
+  };
 }
+
+// ── Batch install (concurrent + spinner) ─────────────────────
 
 function sortByRepo(skills: SkillEntry[]): SkillEntry[] {
   return [...skills].sort((a, b) => {
@@ -145,8 +327,9 @@ interface InstallAllResult {
 export async function installAll(
   skills: SkillEntry[],
   agents: string[] = [],
+  opts: InstallOptions = {},
 ): Promise<InstallAllResult> {
-  if (!process.stdout.isTTY) return installAllSimple(skills, agents);
+  if (!process.stdout.isTTY) return installAllSimple(skills, agents, opts);
 
   const CONCURRENCY = 6;
   const sorted = sortByRepo(skills);
@@ -208,7 +391,7 @@ export async function installAll(
       activeCount++;
       render();
 
-      const result = await installSkill(state.skill, agents);
+      const result = await installSkill(state.skill, agents, opts);
 
       activeCount--;
       if (result.success) {
@@ -243,6 +426,7 @@ export async function installAll(
 async function installAllSimple(
   skills: SkillEntry[],
   agents: string[] = [],
+  opts: InstallOptions = {},
 ): Promise<InstallAllResult> {
   const CONCURRENCY = 6;
   const sorted = sortByRepo(skills);
@@ -255,7 +439,7 @@ async function installAllSimple(
     while (nextIdx < sorted.length) {
       const idx = nextIdx++;
       const { skill } = sorted[idx];
-      const result = await installSkill(skill, agents);
+      const result = await installSkill(skill, agents, opts);
 
       if (result.success) {
         log(green(`   ✔ ${skill}`));
@@ -278,4 +462,11 @@ async function installAllSimple(
   await Promise.all(workers);
 
   return { installed, failed, errors };
+}
+
+// ── Deprecated shim ──────────────────────────────────────────
+
+/** @deprecated retained so that UI code keeps compiling; no longer used. */
+export function resolveSkillsBin(): string | null {
+  return null;
 }

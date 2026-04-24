@@ -19,7 +19,7 @@ import {
   SHOW_CURSOR,
 } from "./colors.ts";
 import { printBanner, multiSelect, formatTime } from "./ui.ts";
-import { installAll, resolveSkillsBin } from "./installer.ts";
+import { installAll, loadRegistry } from "./installer.ts";
 import { cleanupClaudeMd } from "./claude.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -391,13 +391,13 @@ async function main(): Promise<void> {
 
   if (skills.length === 0) {
     log(yellow("   No skills available for your stack yet."));
-    log(dim("   Check https://skills.sh for the latest."));
+    log(dim("   Check https://autoskills.sh for the latest."));
     log();
     process.exit(0);
   }
 
   if (!dryRun) {
-    setImmediate(resolveSkillsBin);
+    setImmediate(loadRegistry);
   }
 
   if (dryRun) {
