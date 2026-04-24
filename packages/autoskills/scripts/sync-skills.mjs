@@ -54,12 +54,18 @@ const FLAGS = {
   dryRun: args.includes("--dry-run"),
   force: args.includes("--force"),
   noReview: args.includes("--no-review"),
+  retryFailed: args.includes("--retry-failed"),
   only: (() => {
     const i = args.indexOf("--only");
     return i !== -1 ? args[i + 1] : null;
   })(),
   verbose: args.includes("-v") || args.includes("--verbose"),
 };
+
+if (FLAGS.only && FLAGS.retryFailed) {
+  log(red("✘ --only and --retry-failed cannot be used together"));
+  process.exit(1);
+}
 
 if (args.includes("-h") || args.includes("--help")) {
   log(`
@@ -73,6 +79,7 @@ if (args.includes("-h") || args.includes("--help")) {
     --force         Accept skills flagged by the auditor
     --no-review     Skip the OpenAI review (dev only)
     --only <name>   Sync a single skill by name
+    --retry-failed  Sync only skills from the last report that failed or were flagged
     -v, --verbose   Show per-file details
     -h, --help      Show this help
 `);
@@ -89,12 +96,43 @@ function collectAllSkillPaths() {
   return [...out];
 }
 
-function groupSkillsByRepo(skills) {
+function getSkillName(skillPath) {
+  try {
+    const { skillName } = parseSkillPath(skillPath);
+    if (skillName) return skillName;
+  } catch {
+    // Reports may be edited manually; fall back to the final path segment.
+  }
+  return skillPath.split("/").filter(Boolean).at(-1) || skillPath;
+}
+
+function collectRetryFailedSkillNames() {
+  if (!existsSync(REPORT_PATH)) {
+    throw new Error(`retry report not found: ${REPORT_PATH}`);
+  }
+
+  const report = JSON.parse(readFileSync(REPORT_PATH, "utf-8"));
+  const retry = new Set();
+  const add = (entry) => {
+    const skill = typeof entry === "string" ? entry : entry?.skill;
+    if (skill) retry.add(getSkillName(skill));
+  };
+
+  for (const entry of report.flagged || []) add(entry);
+  for (const entry of report.rejected || []) add(entry);
+  for (const entry of report.missing || []) add(entry);
+  for (const entry of report.errors || []) add(entry);
+
+  return retry;
+}
+
+function groupSkillsByRepo(skills, retryFailed = null) {
   const byRepo = new Map();
   for (const full of skills) {
     const { repo, skillName } = parseSkillPath(full);
     if (!skillName || SKIP_NAMES.has(skillName)) continue;
     if (FLAGS.only && skillName !== FLAGS.only) continue;
+    if (retryFailed && !retryFailed.has(skillName)) continue;
     if (!byRepo.has(repo)) byRepo.set(repo, []);
     byRepo.get(repo).push({ full, skillName });
   }
@@ -533,7 +571,21 @@ async function main() {
   log();
 
   const allSkills = collectAllSkillPaths();
-  const byRepo = groupSkillsByRepo(allSkills);
+  const retryFailed = FLAGS.retryFailed ? collectRetryFailedSkillNames() : null;
+  if (retryFailed) {
+    if (retryFailed.size === 0) {
+      log(green("No failed or flagged skills found in the last report."));
+      process.exit(0);
+    }
+    log(dim(`   --retry-failed: retrying ${retryFailed.size} skill${retryFailed.size === 1 ? "" : "s"}`));
+    log();
+  }
+
+  const byRepo = groupSkillsByRepo(allSkills, retryFailed);
+  if (FLAGS.retryFailed && byRepo.size === 0) {
+    log(green("No retryable skills from the last report are present in the current skills map."));
+    process.exit(0);
+  }
 
   const manifest = loadManifest();
   manifest.reviewer = { model: REVIEW_MODEL, promptVersion: REVIEW_PROMPT_VERSION };
