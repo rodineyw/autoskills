@@ -35,7 +35,6 @@
     "validate:registry": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/validate-registry.mjs",
     "prepublishOnly": "pnpm run validate:registry",
     "release": "node scripts/release.mjs",
-    "bench": "node scripts/bench.mjs",
     "sync:skills": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/sync-skills.mjs"
   },
   "devDependencies": {
