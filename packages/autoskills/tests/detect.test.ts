@@ -244,6 +244,21 @@ describe("detectTechnologies", () => {
     ok(ids.includes("zod"));
   });
 
+  it("detects InstantDB from dependencies", () => {
+    writePackageJson(tmp.path, { dependencies: { "@instantdb/react": "^0.21.0" } });
+    const { detected } = detectTechnologies(tmp.path);
+    const instantdb = detected.find((t) => t.id === "instantdb");
+    ok(instantdb);
+    ok(instantdb.skills.includes("instantdb/skills/instantdb"));
+  });
+
+  it("detects InstantDB from schema file", () => {
+    writePackageJson(tmp.path);
+    writeFile(tmp.path, "instant.schema.ts", "import { i } from '@instantdb/react';\n");
+    const { detected } = detectTechnologies(tmp.path);
+    ok(detected.some((t) => t.id === "instantdb"));
+  });
+
   it("detects React Hook Form from dependencies", () => {
     writePackageJson(tmp.path, { dependencies: { "react-hook-form": "^7.58.0" } });
     const { detected } = detectTechnologies(tmp.path);

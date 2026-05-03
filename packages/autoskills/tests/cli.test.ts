@@ -111,6 +111,15 @@ describe("CLI", () => {
       ok(output.includes("bash-defensive-patterns"));
     });
 
+    it("detects InstantDB and suggests the official skill", () => {
+      writePackageJson(tmp.path, { dependencies: { "@instantdb/react": "^0.21.0" } });
+
+      const output = run(["--dry-run"], tmp.path);
+
+      ok(output.includes("InstantDB"));
+      ok(output.includes("instantdb"));
+    });
+
     it("detects Astro from package.json", () => {
       writePackageJson(tmp.path, { dependencies: { astro: "^5" } });
 

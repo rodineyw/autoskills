@@ -12821,6 +12821,32 @@
         "summary": "review skipped (--no-review)",
         "checkedAt": "2026-05-03T15:31:35.332Z"
       }
+    },
+    "instantdb": {
+      "source": "instantdb/skills",
+      "skillPath": "instantdb/skills/instantdb",
+      "commitSha": "7f3d1d12e51ecbe67b9f77a13569d65b66041373",
+      "files": [
+        "SKILL.md"
+      ],
+      "sha256": {
+        "SKILL.md": "df81a536e67523d1d89786045fe22acb8fe3d9ca3ee7fdf2fa83d474469552fc"
+      },
+      "bundleHash": "4b1343b649d59c2d87450d19565213151913cfda0161d3bcbf7ac00cb1702f51",
+      "review": {
+        "status": "approved",
+        "flags": [],
+        "summary": "review skipped (--no-review)",
+        "model": "gpt-5.4",
+        "promptVersion": "1.0.0",
+        "reviewedAt": "2026-05-03T15:33:46.080Z"
+      },
+      "securityCheck": {
+        "status": "ok",
+        "findings": [],
+        "summary": "review skipped (--no-review)",
+        "checkedAt": "2026-05-03T15:33:46.080Z"
+      }
     }
   }
 }
