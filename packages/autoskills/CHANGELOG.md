@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.6](https://github.com/midudev/autoskills/releases/tag/v0.3.6) (2026-05-04)
+
+### ✨ Features
+
+- feat(autoskills): detect instantdb projects [`c86be97`](https://github.com/midudev/autoskills/commit/c86be97)
+- feat(autoskills): detect bash scripts [`fe57ba0`](https://github.com/midudev/autoskills/commit/fe57ba0)
+
+### 🐛 Bug Fixes
+
+- fix(autoskills): normalize registry paths for downloads [`8477028`](https://github.com/midudev/autoskills/commit/8477028)
+
+### 📦 Other Changes
+
+- chore(registry): update synced skill manifest [`442cf12`](https://github.com/midudev/autoskills/commit/442cf12)
+- chore(registry): sync turborepo skill [`3fadf74`](https://github.com/midudev/autoskills/commit/3fadf74)
+- chore(registry): sync backend and rails skills [`db3b50b`](https://github.com/midudev/autoskills/commit/db3b50b)
+- chore(registry): sync frontend and mobile skills [`49550f5`](https://github.com/midudev/autoskills/commit/49550f5)
+
 ## [0.3.5](https://github.com/midudev/autoskills/releases/tag/v0.3.5) (2026-05-03)
 
 ### ✨ Features
