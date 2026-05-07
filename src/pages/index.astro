@@ -5,7 +5,7 @@ import '../styles/global.css';
 const iconFiles = import.meta.glob<string>('../icons/*.svg', { query: '?raw', import: 'default', eager: true });
 
 function toFilename(name: string) {
-  return name.toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-').replace(/\./g, '') + '.svg';
+  return name.toLowerCase().replace(/#/g, 'sharp').replace(/\//g, '-').replace(/\s+/g, '-').replace(/\./g, '') + '.svg';
 }
 
 function getIcon(name: string): string | undefined {

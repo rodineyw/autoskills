@@ -72,7 +72,14 @@ const TECHNOLOGIES = [
 ];
 
 function toFilename(name) {
-  return name.toLowerCase().replace(/\//g, "-").replace(/\s+/g, "-").replace(/\./g, "") + ".svg";
+  return (
+    name
+      .toLowerCase()
+      .replace(/#/g, "sharp")
+      .replace(/\//g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/\./g, "") + ".svg"
+  );
 }
 
 mkdirSync(ICONS_DIR, { recursive: true });
