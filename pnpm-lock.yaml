@@ -15,8 +15,8 @@ importers:
         specifier: 6.3.3
         version: 6.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(rollup@4.60.4)
       geist:
-        specifier: 1.7.0
-        version: 1.7.0(next@16.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        specifier: 1.7.1
+        version: 1.7.1(next@16.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       tailwindcss:
         specifier: 4.3.0
         version: 4.3.0
@@ -1037,16 +1037,16 @@ packages:
   bail@2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
 
-  baseline-browser-mapping@2.10.30:
-    resolution: {integrity: sha512-xjOFN16Ha1+Rz4nFYKqHU/LSB+gx/Vi3yQLX7r7sAW+Wa+8hhF2h4pvqTrTMc8+WcDBEunnUurr46Jvv0jk3Vg==}
+  baseline-browser-mapping@2.10.32:
+    resolution: {integrity: sha512-wbPvpyjJPC0zdfdKXxqEL3Ea+bOMD/87X4lftiJkkaBiuG6ALQy1SLmEd7BSmVCuwCQsBrCamgBoLyfFDD1EPg==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
 
-  caniuse-lite@1.0.30001792:
-    resolution: {integrity: sha512-hVLMUZFgR4JJ6ACt1uEESvQN1/dBVqPAKY0hgrV70eN3391K6juAfTjKZLKvOMsx8PxA7gsY1/tLMMTcfFLLpw==}
+  caniuse-lite@1.0.30001793:
+    resolution: {integrity: sha512-iwSsYWaCOoh26cV8NwNRViHlrfUvYsHDfRVcbtmw0Kg6PJIZZXwMkj1442FYLBGkeUf1juAsU3DTfxW579mrPA==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -1235,8 +1235,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  geist@1.7.0:
-    resolution: {integrity: sha512-ZaoiZwkSf0DwwB1ncdLKp+ggAldqxl5L1+SXaNIBGkPAqcu+xjVJLxlf3/S8vLt9UHx1xu5fz3lbzKCj5iOVdQ==}
+  geist@1.7.1:
+    resolution: {integrity: sha512-XF8DM30ODhDu0Ng5S2kOS8j4ZkG/6z2fKWAiFJA7wG0Hc92ZXgjYLrwbD9bVU4nGVzwboPtG+QtaPGsfgnXLaA==}
     peerDependencies:
       next: '>=13.2.0'
 
@@ -2785,11 +2785,11 @@ snapshots:
 
   bail@2.0.2: {}
 
-  baseline-browser-mapping@2.10.30: {}
+  baseline-browser-mapping@2.10.32: {}
 
   boolbase@1.0.0: {}
 
-  caniuse-lite@1.0.30001792: {}
+  caniuse-lite@1.0.30001793: {}
 
   ccount@2.0.1: {}
 
@@ -2966,7 +2966,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  geist@1.7.0(next@16.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
+  geist@1.7.1(next@16.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
       next: 16.2.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
@@ -3499,8 +3499,8 @@ snapshots:
     dependencies:
       '@next/env': 16.2.1
       '@swc/helpers': 0.5.15
-      baseline-browser-mapping: 2.10.30
-      caniuse-lite: 1.0.30001792
+      baseline-browser-mapping: 2.10.32
+      caniuse-lite: 1.0.30001793
       postcss: 8.4.31
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
